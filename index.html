@@ -7,6 +7,8 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <canvas id="confetti-canvas"></canvas>
+  <div id="screen-flash"></div>
   <div class="app">
     <header>
       <h1>🎲 Random Points Game</h1>
@@ -31,6 +33,7 @@
           <span class="countdown-label">prossimo punto</span>
         </div>
         <div class="controls">
+          <button id="sound-btn" type="button" aria-label="Attiva/disattiva audio">🔊</button>
           <button id="pause-btn">⏸ Pausa</button>
           <button id="reset-btn">🔄 Nuova partita</button>
         </div>
