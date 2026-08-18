@@ -4,7 +4,7 @@ Un semplice giochino da giocare con gli amici! Inserisci i nomi dei giocatori, p
 
 ## Come si gioca
 
-1. Apri `index.html` nel browser (oppure usa GitHub Pages, vedi sotto).
+1. Apri il gioco su **https://binco97.github.io/random-points-game/** (oppure in locale, vedi sotto).
 2. Aggiungi almeno 2 giocatori inserendo il nome e premendo **➕ Aggiungi**.
 3. Premi **▶️ Play** per iniziare.
 4. Ogni 5 secondi un giocatore a caso riceve un punto e la classifica si aggiorna live.
@@ -15,7 +15,7 @@ Un semplice giochino da giocare con gli amici! Inserisci i nomi dei giocatori, p
 Nessuna installazione richiesta: è HTML, CSS e JavaScript puri, senza dipendenze.
 
 - **In locale**: apri direttamente il file `index.html` nel browser, oppure avvia un piccolo server (es. `python3 -m http.server`) e visita `http://localhost:8000`.
-- **GitHub Pages**: attiva GitHub Pages nelle impostazioni del repository (Settings → Pages → Deploy from branch `main`, cartella `/root`) per ottenere un link condivisibile con gli amici.
+- **Online**: https://binco97.github.io/random-points-game/ — pubblicato automaticamente da GitHub Actions a ogni push su `main`.
 
 ## Struttura
 
