@@ -33,6 +33,13 @@
     </section>
 
     <section id="game-screen" class="screen hidden">
+      <div class="ambient" aria-hidden="true">
+        <span>🍀</span>
+        <span>✨</span>
+        <span>🎲</span>
+        <span>⭐</span>
+        <span>🍀</span>
+      </div>
       <div id="winner-banner" class="winner-banner hidden"></div>
       <div class="game-header">
         <div class="stat-box">
@@ -40,7 +47,13 @@
           <span class="stat-label">punti rimasti</span>
         </div>
         <div class="countdown">
-          <span id="countdown-value">5</span>
+          <div class="countdown-ring-wrap">
+            <svg class="countdown-ring" viewBox="0 0 100 100">
+              <circle class="countdown-ring-bg" cx="50" cy="50" r="45"></circle>
+              <circle id="countdown-ring-progress" class="countdown-ring-progress" cx="50" cy="50" r="45"></circle>
+            </svg>
+            <span id="countdown-value">5</span>
+          </div>
           <span class="countdown-label">prossimo punto</span>
         </div>
       </div>

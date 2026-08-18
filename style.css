@@ -115,11 +115,35 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .game-header { display: flex; justify-content: space-around; align-items: center; gap: 12px; margin-bottom: 16px; }
 .countdown, .stat-box { text-align: center; }
-#countdown-value, #points-remaining-value { display: block; font-size: 2.5rem; font-weight: 700; color: var(--bg-end); line-height: 1; }
+#points-remaining-value { display: block; font-size: 2.5rem; font-weight: 700; color: var(--bg-end); line-height: 1; }
 .countdown-label, .stat-label { font-size: 0.8rem; color: #888; text-transform: uppercase; }
 .controls { display: flex; gap: 8px; margin-bottom: 16px; }
 #pause-btn { background: #444; color: #fff; }
 #reset-btn { background: #eee; color: #333; }
+
+.countdown-ring-wrap { position: relative; width: 72px; height: 72px; margin: 0 auto; }
+.countdown-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.countdown-ring-bg { fill: none; stroke: #e6e6ee; stroke-width: 8; }
+.countdown-ring-progress {
+  fill: none;
+  stroke: var(--bg-end);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 282.7;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+}
+.countdown-ring-progress.hot { stroke: var(--accent); }
+.countdown-ring-wrap #countdown-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--bg-end);
+}
 
 .toast {
   text-align: center;
@@ -162,6 +186,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .leaderboard-row .rank { text-align: center; font-size: 1.2rem; }
 .leaderboard-row .score { font-weight: 700; color: var(--bg-end); }
 .leaderboard-row.pulse { animation: pulse 0.7s cubic-bezier(0.36, 1.8, 0.6, 1); }
+.leaderboard-row.spotlight {
+  background: linear-gradient(90deg, #fff2a8, #ffd76a);
+  box-shadow: 0 0 0 2px var(--gold), 0 4px 14px rgba(255, 215, 0, 0.5);
+}
 
 @keyframes pulse {
   0% { transform: scale(1); box-shadow: none; }
@@ -196,6 +224,29 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 #sound-btn { background: #eee; color: #333; padding: 10px 14px; }
+
+#game-screen { position: relative; overflow: hidden; }
+
+.ambient { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.ambient span {
+  position: absolute;
+  bottom: -10%;
+  font-size: 1.4rem;
+  opacity: 0;
+  animation: ambient-float 9s ease-in infinite;
+}
+.ambient span:nth-child(1) { left: 8%; animation-delay: 0s; }
+.ambient span:nth-child(2) { left: 28%; animation-delay: 1.8s; }
+.ambient span:nth-child(3) { left: 50%; animation-delay: 3.6s; }
+.ambient span:nth-child(4) { left: 70%; animation-delay: 5.4s; }
+.ambient span:nth-child(5) { left: 88%; animation-delay: 7.2s; }
+
+@keyframes ambient-float {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.35; }
+  90% { opacity: 0.25; }
+  100% { transform: translateY(-420px) rotate(25deg); opacity: 0; }
+}
 
 #confetti-canvas {
   position: fixed;

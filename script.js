@@ -5,12 +5,17 @@ const SPEEDUP_STAGES = [
   { ratio: 0.70, seconds: 4 },
 ];
 const CONFETTI_COLORS = ['#ff5e62', '#ffd700', '#2575fc', '#6a11cb', '#00e676', '#ff4081', '#00e5ff', '#ff9100'];
+const RING_CIRCUMFERENCE = 282.7;
+const SPOTLIGHT_STEP_MS = 110;
 
 const state = {
   players: [],
   running: false,
   countdownId: null,
   countdownRemaining: BASE_INTERVAL_SECONDS,
+  currentIntervalSeconds: BASE_INTERVAL_SECONDS,
+  spotlightTimeoutId: null,
+  spotlightIntervalId: null,
   soundEnabled: true,
   totalPoints: 100,
   remainingPoints: 100,
@@ -28,6 +33,7 @@ const pauseBtn = document.getElementById('pause-btn');
 const resetBtn = document.getElementById('reset-btn');
 const soundBtn = document.getElementById('sound-btn');
 const countdownValue = document.getElementById('countdown-value');
+const countdownRingProgress = document.getElementById('countdown-ring-progress');
 const pointsRemainingValue = document.getElementById('points-remaining-value');
 const winnerBanner = document.getElementById('winner-banner');
 const leaderboard = document.getElementById('leaderboard');
@@ -100,26 +106,60 @@ function getIntervalSeconds() {
 }
 
 function runCountdownCycle() {
-  state.countdownRemaining = getIntervalSeconds();
-  updateCountdownDisplay();
+  armNextCycle();
   clearInterval(state.countdownId);
   state.countdownId = setInterval(() => {
     state.countdownRemaining -= 1;
     if (state.countdownRemaining <= 0) {
+      stopSpotlight();
       assignRandomPoint();
       if (state.remainingPoints <= 0) {
         endGame();
         return;
       }
-      state.countdownRemaining = getIntervalSeconds();
+      armNextCycle();
     }
     updateCountdownDisplay();
   }, 1000);
 }
 
+function armNextCycle() {
+  state.currentIntervalSeconds = getIntervalSeconds();
+  state.countdownRemaining = state.currentIntervalSeconds;
+  updateCountdownDisplay();
+
+  stopSpotlight();
+  clearTimeout(state.spotlightTimeoutId);
+  const suspenseLeadMs = Math.max(0, (state.currentIntervalSeconds - 2) * 1000);
+  state.spotlightTimeoutId = setTimeout(startSpotlight, suspenseLeadMs);
+}
+
 function updateCountdownDisplay() {
   countdownValue.textContent = state.countdownRemaining;
-  countdownValue.classList.toggle('hot', state.countdownRemaining > 0 && state.countdownRemaining <= 2);
+  const isHot = state.countdownRemaining > 0 && state.countdownRemaining <= 2;
+  countdownValue.classList.toggle('hot', isHot);
+  countdownRingProgress.classList.toggle('hot', isHot);
+
+  const fraction = state.countdownRemaining / state.currentIntervalSeconds;
+  countdownRingProgress.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - fraction));
+}
+
+function startSpotlight() {
+  stopSpotlight();
+  const rows = leaderboard.querySelectorAll('.leaderboard-row');
+  if (rows.length === 0) return;
+  let index = 0;
+  state.spotlightIntervalId = setInterval(() => {
+    rows.forEach((row) => row.classList.remove('spotlight'));
+    rows[index % rows.length].classList.add('spotlight');
+    index += 1;
+  }, SPOTLIGHT_STEP_MS);
+}
+
+function stopSpotlight() {
+  clearInterval(state.spotlightIntervalId);
+  state.spotlightIntervalId = null;
+  leaderboard.querySelectorAll('.spotlight').forEach((row) => row.classList.remove('spotlight'));
 }
 
 function updatePointsRemainingDisplay() {
@@ -294,6 +334,8 @@ function playDing() {
 function togglePause() {
   if (state.running) {
     clearInterval(state.countdownId);
+    clearTimeout(state.spotlightTimeoutId);
+    stopSpotlight();
     state.running = false;
     pauseBtn.textContent = '▶️ Riprendi';
   } else {
@@ -305,6 +347,8 @@ function togglePause() {
 
 function resetGame() {
   clearInterval(state.countdownId);
+  clearTimeout(state.spotlightTimeoutId);
+  stopSpotlight();
   state.running = false;
   state.players = [];
   pauseBtn.textContent = '⏸ Pausa';
