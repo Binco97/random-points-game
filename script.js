@@ -1,12 +1,19 @@
-const POINT_INTERVAL_SECONDS = 5;
+const BASE_INTERVAL_SECONDS = 5;
+const SPEEDUP_STAGES = [
+  { ratio: 0.15, seconds: 1 },
+  { ratio: 0.40, seconds: 3 },
+  { ratio: 0.70, seconds: 4 },
+];
 const CONFETTI_COLORS = ['#ff5e62', '#ffd700', '#2575fc', '#6a11cb', '#00e676', '#ff4081', '#00e5ff', '#ff9100'];
 
 const state = {
   players: [],
   running: false,
   countdownId: null,
-  countdownRemaining: POINT_INTERVAL_SECONDS,
+  countdownRemaining: BASE_INTERVAL_SECONDS,
   soundEnabled: true,
+  totalPoints: 100,
+  remainingPoints: 100,
 };
 
 const setupScreen = document.getElementById('setup-screen');
@@ -14,23 +21,20 @@ const gameScreen = document.getElementById('game-screen');
 const addPlayerForm = document.getElementById('add-player-form');
 const playerNameInput = document.getElementById('player-name-input');
 const playerList = document.getElementById('player-list');
+const totalPointsInput = document.getElementById('total-points-input');
 const playBtn = document.getElementById('play-btn');
 const setupHint = document.getElementById('setup-hint');
 const pauseBtn = document.getElementById('pause-btn');
 const resetBtn = document.getElementById('reset-btn');
 const soundBtn = document.getElementById('sound-btn');
 const countdownValue = document.getElementById('countdown-value');
+const pointsRemainingValue = document.getElementById('points-remaining-value');
+const winnerBanner = document.getElementById('winner-banner');
 const leaderboard = document.getElementById('leaderboard');
 const toast = document.getElementById('toast');
 const screenFlash = document.getElementById('screen-flash');
 const confettiCanvas = document.getElementById('confetti-canvas');
 const confettiCtx = confettiCanvas.getContext('2d');
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
 
 addPlayerForm.addEventListener('submit', (event) => {
   event.preventDefault();
@@ -72,6 +76,15 @@ soundBtn.addEventListener('click', () => {
 });
 
 function startGame() {
+  const parsedTotal = parseInt(totalPointsInput.value, 10);
+  state.totalPoints = Number.isFinite(parsedTotal) && parsedTotal > 0 ? parsedTotal : 100;
+  state.remainingPoints = state.totalPoints;
+  updatePointsRemainingDisplay();
+
+  winnerBanner.classList.add('hidden');
+  pauseBtn.disabled = false;
+  pauseBtn.textContent = '⏸ Pausa';
+
   ensureAudioContext();
   setupScreen.classList.add('hidden');
   gameScreen.classList.remove('hidden');
@@ -80,15 +93,25 @@ function startGame() {
   runCountdownCycle();
 }
 
+function getIntervalSeconds() {
+  const ratio = state.remainingPoints / state.totalPoints;
+  const stage = SPEEDUP_STAGES.find((s) => ratio <= s.ratio);
+  return stage ? stage.seconds : BASE_INTERVAL_SECONDS;
+}
+
 function runCountdownCycle() {
-  state.countdownRemaining = POINT_INTERVAL_SECONDS;
+  state.countdownRemaining = getIntervalSeconds();
   updateCountdownDisplay();
   clearInterval(state.countdownId);
   state.countdownId = setInterval(() => {
     state.countdownRemaining -= 1;
     if (state.countdownRemaining <= 0) {
       assignRandomPoint();
-      state.countdownRemaining = POINT_INTERVAL_SECONDS;
+      if (state.remainingPoints <= 0) {
+        endGame();
+        return;
+      }
+      state.countdownRemaining = getIntervalSeconds();
     }
     updateCountdownDisplay();
   }, 1000);
@@ -99,15 +122,38 @@ function updateCountdownDisplay() {
   countdownValue.classList.toggle('hot', state.countdownRemaining > 0 && state.countdownRemaining <= 2);
 }
 
+function updatePointsRemainingDisplay() {
+  pointsRemainingValue.textContent = state.remainingPoints;
+}
+
 function assignRandomPoint() {
   const winner = state.players[Math.floor(Math.random() * state.players.length)];
   winner.score += 1;
+  state.remainingPoints -= 1;
+  updatePointsRemainingDisplay();
   renderLeaderboard(winner.id);
-  celebrate(winner.name);
+  celebrate(`🎉 +1 a ${winner.name}! 🎉`);
 }
 
-function celebrate(winnerName) {
-  showPointPopup(winnerName);
+function endGame() {
+  clearInterval(state.countdownId);
+  state.running = false;
+  pauseBtn.disabled = true;
+  countdownValue.textContent = '🏁';
+  countdownValue.classList.remove('hot');
+
+  const champion = [...state.players].sort((a, b) => b.score - a.score)[0];
+  winnerBanner.textContent = `🏆 ${champion.name} vince con ${champion.score} punti! 🏆`;
+  winnerBanner.classList.remove('hidden');
+
+  flashScreen();
+  burstConfetti();
+  setTimeout(burstConfetti, 300);
+  playDing();
+}
+
+function celebrate(message) {
+  showPointPopup(message);
   playDing();
   flashScreen();
   burstConfetti();
@@ -148,8 +194,8 @@ function renderLeaderboard(highlightId) {
   });
 }
 
-function showPointPopup(name) {
-  toast.textContent = `🎉 +1 a ${name}! 🎉`;
+function showPointPopup(message) {
+  toast.textContent = message;
   toast.classList.remove('hidden', 'pop');
   void toast.offsetWidth;
   toast.classList.add('pop');
@@ -262,6 +308,8 @@ function resetGame() {
   state.running = false;
   state.players = [];
   pauseBtn.textContent = '⏸ Pausa';
+  pauseBtn.disabled = false;
+  winnerBanner.classList.add('hidden');
   gameScreen.classList.add('hidden');
   setupScreen.classList.remove('hidden');
   renderPlayerList();
